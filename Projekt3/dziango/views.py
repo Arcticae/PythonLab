@@ -18,7 +18,7 @@ def threads(request):
 
 def thread_view(request, pk):
     heading = get_object_or_404(Thread, pk=pk)
-    replies = Reply.objects.filter(thread=heading).order_by('-date_posted')
+    replies = Reply.objects.filter(thread=heading).order_by('date_posted')
     return render(request, 'dziango/thread_view.html', {'thread_number': pk, 'replies': replies, 'heading': heading})
 
 
@@ -28,7 +28,7 @@ def new_thread(request):
         if form.is_valid():
             thread = form.save(commit=False)
             thread.poster = request.user
-            thread.date_creation = timezone.now()
+            thread.last_post = timezone.now()
             thread.save()
             return redirect('threads')
     else:
@@ -61,6 +61,9 @@ def new_post(request, pk):
             post.thread.last_modified = timezone.now()
             post.created_date = timezone.now()
             post.thread.save()
+            thread= Thread.objects.get(pk=pk)
+            thread.last_post=timezone.now()
+            thread.save()
             post.save()
             return redirect('thread_view', pk=pk)
     else:
@@ -70,7 +73,7 @@ def new_post(request, pk):
 
 def delete_post(request, pk, th_pk):
     Reply.objects.get(pk=pk).delete()
-    return redirect('thread', pk=th_pk)
+    return redirect('thread_view', pk=th_pk)
 
 
 def delete_thread(request, pk):
